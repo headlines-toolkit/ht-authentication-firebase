@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:ht_authentication_client/ht_authentication_client.dart';
-import 'package:ht_authentication_client/src/models/user.dart';
 
 /// {@template ht_authentication_firebase}
 /// Firebase implementation of [HtAuthenticationClient].
