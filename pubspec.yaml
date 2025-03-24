@@ -1,5 +1,5 @@
 name: ht_authentication_firebase
-description: A starting point for Dart libraries or applications.
+description: Firebase implementation of the `ht_authentication_client` interface.
 publish_to: none
 repository: https://github.com/headlines-toolkit/ht-authentication-firebase
 
