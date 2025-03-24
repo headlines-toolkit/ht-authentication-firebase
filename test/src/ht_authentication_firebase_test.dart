@@ -368,8 +368,9 @@ void main() {
         when(() => mockFirebaseUser.isAnonymous).thenReturn(false);
         when(() => mockFirebaseUser.emailVerified).thenReturn(true);
         when(() => mockFirebaseUser.metadata).thenReturn(mockUserMetadata);
-        when(() => mockUserMetadata.creationTime).thenReturn(DateTime.now());
-        when(() => mockUserMetadata.lastSignInTime).thenReturn(DateTime.now());
+        final now = DateTime.now();
+        when(() => mockUserMetadata.creationTime).thenReturn(now.subtract(const Duration(seconds: 1)));
+        when(() => mockUserMetadata.lastSignInTime).thenReturn(now);
 
         expect(
           htAuthenticationFirebase.user,
@@ -381,7 +382,7 @@ void main() {
                 .having((u) => u.photoUrl, 'photoUrl', 'photoUrl')
                 .having((u) => u.isAnonymous, 'isAnonymous', false)
                 .having((u) => u.isEmailVerified, 'isEmailVerified', true)
-                .having((u) => u.isNewUser, 'isNewUser', true),
+                .having((u) => u.isNewUser, 'isNewUser', false),
           ]),
         );
       });
