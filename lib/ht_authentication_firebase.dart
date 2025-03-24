@@ -1,8 +1,6 @@
-/// Support for doing something awesome.
-///
-/// More dartdocs go here.
+/// Firebase implementation of the `ht_authentication_client` interface.
 library;
 
-export 'src/ht_authentication_firebase.dart';
+export 'package:ht_authentication_client/ht_authentication_client.dart';
 
-// TODO: Export any libraries intended for clients of this package.
+export 'src/ht_authentication_firebase.dart';
