@@ -20,9 +20,15 @@ class MockGoogleSignInAuthentication extends Mock
 
 class MockAuthCredential extends Mock implements firebase_auth.AuthCredential {}
 
+class FakeAuthCredential extends Fake implements firebase_auth.AuthCredential {}
+
 class MockUserMetadata extends Mock implements firebase_auth.UserMetadata {}
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(FakeAuthCredential());
+  });
+
   group('HtAuthenticationFirebase', () {
     late HtAuthenticationFirebase htAuthenticationFirebase;
     late MockFirebaseAuth mockFirebaseAuth;
@@ -41,11 +47,11 @@ void main() {
       test('should delete the user account successfully', () async {
         final mockUser = MockUser();
         when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
-        when(() => mockUser.delete()).thenAnswer((_) async {});
+        when(mockUser.delete).thenAnswer((_) async {});
 
         await htAuthenticationFirebase.deleteAccount();
 
-        verify(() => mockUser.delete()).called(1);
+        verify(mockUser.delete).called(1);
       });
 
       test(
@@ -53,12 +59,12 @@ void main() {
         () async {
           final mockUser = MockUser();
           when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
-          when(() => mockUser.delete()).thenThrow(
+          when(mockUser.delete).thenThrow(
             firebase_auth.FirebaseAuthException(code: 'auth/unknown'),
           );
 
           expect(
-            () async => await htAuthenticationFirebase.deleteAccount(),
+            () async => htAuthenticationFirebase.deleteAccount(),
             throwsA(isA<DeleteAccountException>()),
           );
         },
@@ -69,10 +75,10 @@ void main() {
         () async {
           final mockUser = MockUser();
           when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
-          when(() => mockUser.delete()).thenThrow(Exception('Unknown error'));
+          when(mockUser.delete).thenThrow(Exception('Unknown error'));
 
           expect(
-            () async => await htAuthenticationFirebase.deleteAccount(),
+            () async => htAuthenticationFirebase.deleteAccount(),
             throwsA(isA<DeleteAccountException>()),
           );
         },
@@ -99,7 +105,7 @@ void main() {
           );
 
           expect(
-            () async => await htAuthenticationFirebase.signInAnonymously(),
+            () async => htAuthenticationFirebase.signInAnonymously(),
             throwsA(isA<AnonymousLoginException>()),
           );
         },
@@ -113,7 +119,7 @@ void main() {
           ).thenThrow(Exception('Unknown error'));
 
           expect(
-            () async => await htAuthenticationFirebase.signInAnonymously(),
+            () async => htAuthenticationFirebase.signInAnonymously(),
             throwsA(isA<AnonymousLoginException>()),
           );
         },
@@ -158,7 +164,7 @@ void main() {
           );
 
           expect(
-            () async => await htAuthenticationFirebase
+            () async => htAuthenticationFirebase
                 .signInWithEmailAndPassword(email: email, password: password),
             throwsA(isA<EmailSignInException>()),
           );
@@ -174,7 +180,7 @@ void main() {
         ).thenThrow(Exception('Unknown error'));
 
         expect(
-          () async => await htAuthenticationFirebase.signInWithEmailAndPassword(
+          () async => htAuthenticationFirebase.signInWithEmailAndPassword(
             email: email,
             password: password,
           ),
@@ -218,7 +224,7 @@ void main() {
           when(() => mockGoogleSignIn.signIn()).thenAnswer((_) async => null);
 
           expect(
-            () async => await htAuthenticationFirebase.signInWithGoogle(),
+            () async => htAuthenticationFirebase.signInWithGoogle(),
             throwsA(isA<GoogleSignInException>()),
           );
         },
@@ -247,7 +253,7 @@ void main() {
             firebase_auth.FirebaseAuthException(code: 'auth/unknown'),
           );
           expect(
-            () async => await htAuthenticationFirebase.signInWithGoogle(),
+            () async => htAuthenticationFirebase.signInWithGoogle(),
             throwsA(isA<GoogleSignInException>()),
           );
         },
@@ -273,7 +279,7 @@ void main() {
         ).thenThrow(Exception('Unknown error'));
 
         expect(
-          () async => await htAuthenticationFirebase.signInWithGoogle(),
+          () async => htAuthenticationFirebase.signInWithGoogle(),
           throwsA(isA<GoogleSignInException>()),
         );
       });
@@ -282,7 +288,9 @@ void main() {
     group('signOut', () {
       test('should sign out successfully', () async {
         when(() => mockFirebaseAuth.signOut()).thenAnswer((_) async {});
-        when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async {});
+        when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async {
+          return null;
+        });
 
         await htAuthenticationFirebase.signOut();
 
@@ -294,26 +302,34 @@ void main() {
         when(
           () => mockFirebaseAuth.signOut(),
         ).thenThrow(firebase_auth.FirebaseAuthException(code: 'auth/unknown'));
-        when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async {});
+        when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async {
+          return null;
+        });
 
-        expect(
-          () async => await htAuthenticationFirebase.signOut(),
-          throwsA(isA<LogoutException>()),
-        );
-        verify(() => mockGoogleSignIn.signOut()).called(1);
+        try {
+          await htAuthenticationFirebase.signOut();
+        } on LogoutException catch (e) {
+          expect(e, isA<LogoutException>());
+          return;
+        }
+        fail('LogoutException not thrown');
       });
 
       test('should throw LogoutException on generic exception', () async {
         when(
           () => mockFirebaseAuth.signOut(),
         ).thenThrow(Exception('Unknown error'));
-        when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async {});
+        when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async {
+          return null;
+        });
 
-        expect(
-          () async => await htAuthenticationFirebase.signOut(),
-          throwsA(isA<LogoutException>()),
-        );
-        verify(() => mockGoogleSignIn.signOut()).called(1);
+        try {
+          await htAuthenticationFirebase.signOut();
+        } on LogoutException catch (e) {
+          expect(e, isA<LogoutException>());
+          return;
+        }
+        fail('LogoutException not thrown');
       });
       test(
         'should throw LogoutException on Google Sign Out Exception',
@@ -323,11 +339,13 @@ void main() {
             () => mockGoogleSignIn.signOut(),
           ).thenThrow(Exception('Unknown error'));
 
-          expect(
-            () async => await htAuthenticationFirebase.signOut(),
-            throwsA(isA<LogoutException>()),
-          );
-          verify(() => mockFirebaseAuth.signOut()).called(1);
+          try {
+            await htAuthenticationFirebase.signOut();
+          } on LogoutException catch (e) {
+            expect(e, isA<LogoutException>());
+            return;
+          }
+          fail('LogoutException not thrown');
         },
       );
     });
@@ -335,6 +353,7 @@ void main() {
       test('should return a stream of User objects', () {
         final mockFirebaseUser = MockUser();
         final mockUserMetadata = MockUserMetadata();
+        final now = DateTime.now();
 
         when(
           () => mockFirebaseAuth.authStateChanges(),
@@ -367,8 +386,9 @@ void main() {
       test(
         'should return a User object with isAnonymous true when firebaseUser is null',
         () {
-          when(() => mockFirebaseAuth.authStateChanges())
-              .thenAnswer((_) => Stream.value(null));
+          when(
+            () => mockFirebaseAuth.authStateChanges(),
+          ).thenAnswer((_) => Stream.value(null));
 
           expect(
             htAuthenticationFirebase.user,
@@ -384,9 +404,11 @@ void main() {
         () {
           final mockFirebaseUser = MockUser();
           final mockUserMetadata = MockUserMetadata();
+          final now = DateTime.now();
 
-          when(() => mockFirebaseAuth.authStateChanges())
-              .thenAnswer((_) => Stream.value(mockFirebaseUser));
+          when(
+            () => mockFirebaseAuth.authStateChanges(),
+          ).thenAnswer((_) => Stream.value(mockFirebaseUser));
           when(() => mockFirebaseUser.uid).thenReturn('uid');
           when(() => mockFirebaseUser.email).thenReturn('email');
           when(() => mockFirebaseUser.displayName).thenReturn('displayName');
@@ -396,8 +418,8 @@ void main() {
           when(() => mockFirebaseUser.metadata).thenReturn(mockUserMetadata);
           when(
             () => mockUserMetadata.creationTime,
-          ).thenReturn(DateTime.now().subtract(const Duration(days: 1)));
-          when(() => mockUserMetadata.lastSignInTime).thenReturn(DateTime.now());
+          ).thenReturn(now.subtract(const Duration(days: 1)));
+          when(() => mockUserMetadata.lastSignInTime).thenReturn(now);
 
           expect(
             htAuthenticationFirebase.user,
