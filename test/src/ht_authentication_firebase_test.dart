@@ -1,3 +1,6 @@
+//
+// ignore_for_file: lines_longer_than_80_chars
+
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -164,8 +167,10 @@ void main() {
           );
 
           expect(
-            () async => htAuthenticationFirebase
-                .signInWithEmailAndPassword(email: email, password: password),
+            () async => htAuthenticationFirebase.signInWithEmailAndPassword(
+              email: email,
+              password: password,
+            ),
             throwsA(isA<EmailSignInException>()),
           );
         },
@@ -193,7 +198,6 @@ void main() {
       test('should sign in with Google successfully', () async {
         final mockGoogleSignInAccount = MockGoogleSignInAccount();
         final mockGoogleSignInAuthentication = MockGoogleSignInAuthentication();
-        final mockAuthCredential = MockAuthCredential();
         final mockUserCredential = MockUserCredential();
 
         when(
@@ -353,7 +357,6 @@ void main() {
       test('should return a stream of User objects', () {
         final mockFirebaseUser = MockUser();
         final mockUserMetadata = MockUserMetadata();
-        final now = DateTime.now();
 
         when(
           () => mockFirebaseAuth.authStateChanges(),
