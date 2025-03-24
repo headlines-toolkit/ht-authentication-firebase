@@ -4,7 +4,7 @@ publish_to: none
 repository: https://github.com/headlines-toolkit/ht-authentication-firebase
 
 environment:
-  sdk: ^3.7.2
+  sdk: ^3.7.0
 
 dependencies:
   firebase_auth: ^5.5.1
