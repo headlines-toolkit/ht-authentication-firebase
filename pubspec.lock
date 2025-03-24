@@ -197,7 +197,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: "3f7a1df3eeaf8626a2cae5238a459260da45a2bb"
+      resolved-ref: "340ea92c405ad78a70180d36932b8e5142697c70"
       url: "https://github.com/headlines-toolkit/ht-authentication-client.git"
     source: git
     version: "0.0.0"
@@ -407,5 +407,5 @@ packages:
     source: hosted
     version: "1.1.1"
 sdks:
-  dart: ">=3.7.2 <4.0.0"
+  dart: ">=3.7.0 <4.0.0"
   flutter: ">=3.27.0"
