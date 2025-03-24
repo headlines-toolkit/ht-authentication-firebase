@@ -369,7 +369,9 @@ void main() {
         when(() => mockFirebaseUser.emailVerified).thenReturn(true);
         when(() => mockFirebaseUser.metadata).thenReturn(mockUserMetadata);
         final now = DateTime.now();
-        when(() => mockUserMetadata.creationTime).thenReturn(now.subtract(const Duration(seconds: 1)));
+        when(
+          () => mockUserMetadata.creationTime,
+        ).thenReturn(now.subtract(const Duration(seconds: 1)));
         when(() => mockUserMetadata.lastSignInTime).thenReturn(now);
 
         expect(
