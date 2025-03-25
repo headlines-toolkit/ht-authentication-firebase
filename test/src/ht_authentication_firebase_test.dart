@@ -382,7 +382,11 @@ void main() {
                 .having((u) => u.email, 'email', 'email')
                 .having((u) => u.displayName, 'displayName', 'displayName')
                 .having((u) => u.photoUrl, 'photoUrl', 'photoUrl')
-                .having((u) => u.isAnonymous, 'isAnonymous', false)
+                .having(
+                  (u) => u.authenticationStatus,
+                  'authenticationStatus',
+                  AuthenticationStatus.authenticated,
+                )
                 .having((u) => u.isEmailVerified, 'isEmailVerified', true)
                 .having((u) => u.isNewUser, 'isNewUser', false),
           ]),
@@ -390,7 +394,7 @@ void main() {
       });
 
       test(
-        'should return a User object with isAnonymous true when firebaseUser is null',
+        'should return a User object with authenticationStatus unauthenticated when firebaseUser is null',
         () {
           when(
             () => mockFirebaseAuth.authStateChanges(),
@@ -399,7 +403,11 @@ void main() {
           expect(
             htAuthenticationFirebase.user,
             emits(
-              isA<User>().having((u) => u.isAnonymous, 'isAnonymous', true),
+              isA<User>().having(
+                (u) => u.authenticationStatus,
+                'authenticationStatus',
+                AuthenticationStatus.unauthenticated,
+              ),
             ),
           );
         },
@@ -435,7 +443,11 @@ void main() {
                   .having((u) => u.email, 'email', 'email')
                   .having((u) => u.displayName, 'displayName', 'displayName')
                   .having((u) => u.photoUrl, 'photoUrl', 'photoUrl')
-                  .having((u) => u.isAnonymous, 'isAnonymous', false)
+                  .having(
+                    (u) => u.authenticationStatus,
+                    'authenticationStatus',
+                    AuthenticationStatus.authenticated,
+                  )
                   .having((u) => u.isEmailVerified, 'isEmailVerified', true)
                   .having((u) => u.isNewUser, 'isNewUser', false),
             ]),
