@@ -197,7 +197,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: d527953e11fa19f2fadae381488682c574c83831
+      resolved-ref: bfad276e63a6d703a635cf743bcf88abcb1d48e0
       url: "https://github.com/headlines-toolkit/ht-authentication-client.git"
     source: git
     version: "0.0.0"
