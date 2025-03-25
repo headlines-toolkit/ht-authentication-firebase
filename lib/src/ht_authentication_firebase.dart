@@ -94,20 +94,22 @@ class HtAuthenticationFirebase implements HtAuthenticationClient {
   @override
   Stream<User> get user {
     return _firebaseAuth.authStateChanges().map((firebaseUser) {
-      final isNewUser = firebaseUser?.metadata.creationTime ==
+      final isNewUser =
+          firebaseUser?.metadata.creationTime ==
           firebaseUser?.metadata.lastSignInTime;
       return User(
         uid: firebaseUser?.uid ?? '',
         email: firebaseUser?.email,
         displayName: firebaseUser?.displayName,
         photoUrl: firebaseUser?.photoURL,
-        authenticationStatus: firebaseUser == null
-          ? AuthenticationStatus.unauthenticated
-          : firebaseUser.isAnonymous
-            ? AuthenticationStatus.anonymous
-            : AuthenticationStatus.authenticated,
+        authenticationStatus:
+            firebaseUser == null
+                ? AuthenticationStatus.unauthenticated
+                : firebaseUser.isAnonymous
+                ? AuthenticationStatus.anonymous
+                : AuthenticationStatus.authenticated,
         isEmailVerified: firebaseUser?.emailVerified ?? false,
-        isNewUser: isNewUser ?? false,
+        isNewUser: isNewUser,
       );
     });
   }
