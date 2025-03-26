@@ -27,22 +27,254 @@ class FakeAuthCredential extends Fake implements firebase_auth.AuthCredential {}
 
 class MockUserMetadata extends Mock implements firebase_auth.UserMetadata {}
 
+// Fake ActionCodeSettings for testing
+class FakeActionCodeSettings extends Fake
+    implements firebase_auth.ActionCodeSettings {}
+
 void main() {
   setUpAll(() {
     registerFallbackValue(FakeAuthCredential());
+    registerFallbackValue(FakeActionCodeSettings()); // Register fallback
   });
 
   group('HtAuthenticationFirebase', () {
     late HtAuthenticationFirebase htAuthenticationFirebase;
     late MockFirebaseAuth mockFirebaseAuth;
     late MockGoogleSignIn mockGoogleSignIn;
+    late firebase_auth.ActionCodeSettings
+    mockActionCodeSettings; // Declare mock
 
     setUp(() {
       mockFirebaseAuth = MockFirebaseAuth();
       mockGoogleSignIn = MockGoogleSignIn();
+      // Create mock ActionCodeSettings for the constructor
+      mockActionCodeSettings = firebase_auth.ActionCodeSettings(
+        url: 'https://test.page.link/signIn',
+        handleCodeInApp: true,
+        iOSBundleId: 'com.example.test.ios',
+        androidPackageName: 'com.example.test.android',
+        androidInstallApp: true,
+        androidMinimumVersion: '12',
+      );
       htAuthenticationFirebase = HtAuthenticationFirebase(
         firebaseAuth: mockFirebaseAuth,
         googleSignIn: mockGoogleSignIn,
+        actionCodeSettings: mockActionCodeSettings, // Pass required settings
+      );
+    });
+
+    group('sendSignInLinkToEmail', () {
+      const email = 'test@example.com';
+      test('should send sign-in link successfully', () async {
+        when(
+          () => mockFirebaseAuth.sendSignInLinkToEmail(
+            email: email,
+            actionCodeSettings: any(named: 'actionCodeSettings'),
+          ),
+        ).thenAnswer((_) async {});
+
+        await htAuthenticationFirebase.sendSignInLinkToEmail(email: email);
+
+        verify(
+          () => mockFirebaseAuth.sendSignInLinkToEmail(
+            email: email,
+            actionCodeSettings:
+                mockActionCodeSettings, // Verify with correct settings
+          ),
+        ).called(1);
+      });
+
+      test(
+        'should throw SendSignInLinkException on FirebaseAuthException',
+        () async {
+          when(
+            () => mockFirebaseAuth.sendSignInLinkToEmail(
+              email: email,
+              actionCodeSettings: any(named: 'actionCodeSettings'),
+            ),
+          ).thenThrow(
+            firebase_auth.FirebaseAuthException(code: 'auth/invalid-email'),
+          );
+
+          expect(
+            () async =>
+                htAuthenticationFirebase.sendSignInLinkToEmail(email: email),
+            throwsA(isA<SendSignInLinkException>()),
+          );
+        },
+      );
+
+      test(
+        'should throw SendSignInLinkException on generic exception',
+        () async {
+          when(
+            () => mockFirebaseAuth.sendSignInLinkToEmail(
+              email: email,
+              actionCodeSettings: any(named: 'actionCodeSettings'),
+            ),
+          ).thenThrow(Exception('Network error'));
+
+          expect(
+            () async =>
+                htAuthenticationFirebase.sendSignInLinkToEmail(email: email),
+            throwsA(isA<SendSignInLinkException>()),
+          );
+        },
+      );
+    });
+
+    group('isSignInWithEmailLink', () {
+      const link = 'https://test.page.link/signIn?email=test@example.com';
+      test('should return true for a valid link', () async {
+        when(
+          () => mockFirebaseAuth.isSignInWithEmailLink(link),
+        ).thenReturn(true);
+
+        final result = await htAuthenticationFirebase.isSignInWithEmailLink(
+          emailLink: link,
+        );
+
+        expect(result, isTrue);
+        verify(() => mockFirebaseAuth.isSignInWithEmailLink(link)).called(1);
+      });
+
+      test('should return false for an invalid link', () async {
+        when(
+          () => mockFirebaseAuth.isSignInWithEmailLink(link),
+        ).thenReturn(false);
+
+        final result = await htAuthenticationFirebase.isSignInWithEmailLink(
+          emailLink: link,
+        );
+
+        expect(result, isFalse);
+        verify(() => mockFirebaseAuth.isSignInWithEmailLink(link)).called(1);
+      });
+
+      test('should return false on exception', () async {
+        when(
+          () => mockFirebaseAuth.isSignInWithEmailLink(link),
+        ).thenThrow(Exception('Invalid link format'));
+
+        final result = await htAuthenticationFirebase.isSignInWithEmailLink(
+          emailLink: link,
+        );
+
+        expect(result, isFalse);
+        verify(() => mockFirebaseAuth.isSignInWithEmailLink(link)).called(1);
+      });
+    });
+
+    group('signInWithEmailLink', () {
+      const email = 'test@example.com';
+      const link = 'https://test.page.link/signIn?email=test@example.com';
+      test('should sign in with email link successfully', () async {
+        final mockUserCredential = MockUserCredential();
+        when(
+          () => mockFirebaseAuth.signInWithEmailLink(
+            email: email,
+            emailLink: link,
+          ),
+        ).thenAnswer((_) async => mockUserCredential);
+
+        await htAuthenticationFirebase.signInWithEmailLink(
+          email: email,
+          emailLink: link,
+        );
+
+        verify(
+          () => mockFirebaseAuth.signInWithEmailLink(
+            email: email,
+            emailLink: link,
+          ),
+        ).called(1);
+      });
+
+      test(
+        'should throw InvalidSignInLinkException on invalid-action-code',
+        () async {
+          when(
+            () => mockFirebaseAuth.signInWithEmailLink(
+              email: email,
+              emailLink: link,
+            ),
+          ).thenThrow(
+            firebase_auth.FirebaseAuthException(code: 'invalid-action-code'),
+          );
+
+          expect(
+            () async => htAuthenticationFirebase.signInWithEmailLink(
+              email: email,
+              emailLink: link,
+            ),
+            throwsA(isA<InvalidSignInLinkException>()),
+          );
+        },
+      );
+
+      test(
+        'should throw InvalidSignInLinkException on invalid-email',
+        () async {
+          when(
+            () => mockFirebaseAuth.signInWithEmailLink(
+              email: email,
+              emailLink: link,
+            ),
+          ).thenThrow(
+            firebase_auth.FirebaseAuthException(code: 'invalid-email'),
+          );
+
+          expect(
+            () async => htAuthenticationFirebase.signInWithEmailLink(
+              email: email,
+              emailLink: link,
+            ),
+            throwsA(isA<InvalidSignInLinkException>()),
+          );
+        },
+      );
+
+      test(
+        'should throw InvalidSignInLinkException on other FirebaseAuthException',
+        () async {
+          when(
+            () => mockFirebaseAuth.signInWithEmailLink(
+              email: email,
+              emailLink: link,
+            ),
+          ).thenThrow(
+            firebase_auth.FirebaseAuthException(code: 'auth/user-disabled'),
+          );
+
+          // Defaulting to InvalidSignInLinkException for other auth errors
+          expect(
+            () async => htAuthenticationFirebase.signInWithEmailLink(
+              email: email,
+              emailLink: link,
+            ),
+            throwsA(isA<InvalidSignInLinkException>()),
+          );
+        },
+      );
+
+      test(
+        'should throw InvalidSignInLinkException on generic exception',
+        () async {
+          when(
+            () => mockFirebaseAuth.signInWithEmailLink(
+              email: email,
+              emailLink: link,
+            ),
+          ).thenThrow(Exception('Network error'));
+
+          expect(
+            () async => htAuthenticationFirebase.signInWithEmailLink(
+              email: email,
+              emailLink: link,
+            ),
+            throwsA(isA<InvalidSignInLinkException>()),
+          );
+        },
       );
     });
 
@@ -129,70 +361,7 @@ void main() {
       );
     });
 
-    group('signInWithEmailAndPassword', () {
-      const email = 'test@example.com';
-      const password = 'password';
-      test('should sign in with email and password successfully', () async {
-        final mockUserCredential = MockUserCredential();
-        when(
-          () => mockFirebaseAuth.signInWithEmailAndPassword(
-            email: email,
-            password: password,
-          ),
-        ).thenAnswer((_) async => mockUserCredential);
-
-        await htAuthenticationFirebase.signInWithEmailAndPassword(
-          email: email,
-          password: password,
-        );
-
-        verify(
-          () => mockFirebaseAuth.signInWithEmailAndPassword(
-            email: email,
-            password: password,
-          ),
-        ).called(1);
-      });
-
-      test(
-        'should throw EmailSignInException on FirebaseAuthException',
-        () async {
-          when(
-            () => mockFirebaseAuth.signInWithEmailAndPassword(
-              email: email,
-              password: password,
-            ),
-          ).thenThrow(
-            firebase_auth.FirebaseAuthException(code: 'auth/unknown'),
-          );
-
-          expect(
-            () async => htAuthenticationFirebase.signInWithEmailAndPassword(
-              email: email,
-              password: password,
-            ),
-            throwsA(isA<EmailSignInException>()),
-          );
-        },
-      );
-
-      test('should throw EmailSignInException on generic exception', () async {
-        when(
-          () => mockFirebaseAuth.signInWithEmailAndPassword(
-            email: email,
-            password: password,
-          ),
-        ).thenThrow(Exception('Unknown error'));
-
-        expect(
-          () async => htAuthenticationFirebase.signInWithEmailAndPassword(
-            email: email,
-            password: password,
-          ),
-          throwsA(isA<EmailSignInException>()),
-        );
-      });
-    });
+    // Removed group('signInWithEmailAndPassword', ...) as the method is deleted
 
     group('signInWithGoogle', () {
       test('should sign in with Google successfully', () async {
