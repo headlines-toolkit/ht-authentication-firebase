@@ -6,10 +6,9 @@ Firebase implementation of the `ht_authentication_client` interface. This packag
 
 This package supports the following authentication methods:
 
+*   **Passwordless Sign-In (Magic Link):** Allows users to sign in using a link sent to their email address.
 *   **Anonymous Sign-In:** Allows users to access your app without creating an account.
-*   **Email/Password Sign-In:** Enables users to sign in using their email address and password.
 *   **Google Sign-In:** Integrates with Google Sign-In for a seamless authentication experience.
-*   **Passwordless Sign-In (Email Link):** Allows users to sign in using a link sent to their email address.
 *   **Sign Out:** Provides functionality for users to sign out of their accounts.
 *   **Account Deletion:** Allows users to delete their accounts.
 *   **User Stream:** Get the current user in real time.
