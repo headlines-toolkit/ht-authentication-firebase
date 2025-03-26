@@ -103,8 +103,6 @@ class HtAuthenticationFirebase implements HtAuthenticationClient {
     }
   }
 
-  // Removed signInWithEmailAndPassword as it's not in the HtAuthenticationClient interface
-
   @override
   Future<void> signInWithGoogle() async {
     try {

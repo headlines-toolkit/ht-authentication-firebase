@@ -9,6 +9,7 @@ This package supports the following authentication methods:
 *   **Anonymous Sign-In:** Allows users to access your app without creating an account.
 *   **Email/Password Sign-In:** Enables users to sign in using their email address and password.
 *   **Google Sign-In:** Integrates with Google Sign-In for a seamless authentication experience.
+*   **Passwordless Sign-In (Email Link):** Allows users to sign in using a link sent to their email address.
 *   **Sign Out:** Provides functionality for users to sign out of their accounts.
 *   **Account Deletion:** Allows users to delete their accounts.
 *   **User Stream:** Get the current user in real time.
@@ -37,16 +38,31 @@ Import the package:
 
 ```dart
 import 'package:ht_authentication_firebase/ht_authentication_firebase.dart';
+import 'package:firebase_auth/firebase_auth.dart' show ActionCodeSettings; // Import ActionCodeSettings
 ```
-Create an instance of `HtAuthenticationFirebase`:
+Create an instance of `HtAuthenticationFirebase`, providing the required `ActionCodeSettings`:
 
 ```dart
-final authenticationClient = HtAuthenticationFirebase();
+// Configure your ActionCodeSettings according to Firebase documentation
+// See: https://firebase.google.com/docs/auth/flutter/passing-state-in-email-actions
+final actionCodeSettings = ActionCodeSettings(
+  url: 'https://www.example.com/finishSignUp?cartId=1234', // Your redirect URL
+  handleCodeInApp: true,
+  iOSBundleId: 'com.example.ios', // Your iOS bundle ID
+  androidPackageName: 'com.example.android', // Your Android package name
+  androidInstallApp: true,
+  androidMinimumVersion: '12',
+);
+
+final authenticationClient = HtAuthenticationFirebase(
+  actionCodeSettings: actionCodeSettings,
+);
 ```
-You can optionally provide instances of `FirebaseAuth` and `GoogleSignIn` to the constructor:
+You can also optionally provide instances of `FirebaseAuth` and `GoogleSignIn` to the constructor:
 
 ```dart
 final authenticationClient = HtAuthenticationFirebase(
+  actionCodeSettings: actionCodeSettings,
   firebaseAuth: FirebaseAuth.instance,
   googleSignIn: GoogleSignIn(),
 );
@@ -65,6 +81,20 @@ await authenticationClient.signInWithEmailAndPassword(
 
 // Sign in with Google
 await authenticationClient.signInWithGoogle();
+
+// Send sign-in link to email
+await authenticationClient.sendSignInLinkToEmail(email: 'user@example.com');
+
+// Check if a link is a sign-in link
+final isSignInLink = await authenticationClient.isSignInWithEmailLink(emailLink: 'your_email_link');
+
+// Sign in with email link
+if (isSignInLink) {
+  await authenticationClient.signInWithEmailLink(
+    email: 'user@example.com', // The email the link was sent to
+    emailLink: 'your_email_link',
+  );
+}
 
 // Sign out
 await authenticationClient.signOut();
@@ -85,8 +115,10 @@ The `HtAuthenticationFirebase` class throws custom exceptions for different erro
 *   `AnonymousLoginException`: Thrown when anonymous sign-in fails.
 *   `EmailSignInException`: Thrown when email/password sign-in fails.
 *   `GoogleSignInException`: Thrown when Google Sign-In fails.
+*   `SendSignInLinkException`: Thrown when sending the email sign-in link fails.
+*   `InvalidSignInLinkException`: Thrown when attempting to sign in with an invalid email link.
 *   `LogoutException`: Thrown when sign-out fails.
-*  `DeleteAccountException`: Thrown when account deletion fails.
+*   `DeleteAccountException`: Thrown when account deletion fails.
 
 You should handle these exceptions appropriately in your application.
 
@@ -94,9 +126,22 @@ You should handle these exceptions appropriately in your application.
 ```dart
 import 'package:ht_authentication_firebase/ht_authentication_firebase.dart';
 import 'package:ht_authentication_client/ht_authentication_client.dart';
+import 'package:firebase_auth/firebase_auth.dart' show ActionCodeSettings;
 
 void main() async {
-  final authenticationClient = HtAuthenticationFirebase();
+  // Configure ActionCodeSettings (replace with your actual settings)
+  final actionCodeSettings = ActionCodeSettings(
+    url: 'https://www.example.com/finishSignUp',
+    handleCodeInApp: true,
+    iOSBundleId: 'com.example.ios',
+    androidPackageName: 'com.example.android',
+    androidInstallApp: true,
+    androidMinimumVersion: '12',
+  );
+
+  final authenticationClient = HtAuthenticationFirebase(
+    actionCodeSettings: actionCodeSettings,
+  );
 
   try {
     // Example: Sign in anonymously
@@ -115,6 +160,12 @@ void main() async {
 
   } on AnonymousLoginException catch (e) {
     print('Anonymous sign-in failed: ${e.cause}');
+  } on SendSignInLinkException catch (e) {
+    print('Sending sign-in link failed: ${e.cause}');
+  } on InvalidSignInLinkException catch (e) {
+    print('Sign-in with email link failed: ${e.cause}');
+  } catch (e) {
+    print('An unexpected error occurred: $e');
   }
 }
 ```
